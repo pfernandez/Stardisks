@@ -1,0 +1,266 @@
+#!/bin/bash
+# Called by web.up to generate star-disk and fixed star pages.
+
+starDir=$1
+scriptDir=$2
+
+	# get all parameters
+V="${scriptDir}/./getValues $starDir"
+nVec=`$V nVec`; qVec=`$V qVec`; mVec=`$V mVec`
+jVec=`$V jVec`; MVec=`$V MVec`
+
+	# generate index page
+echo "<html><body>Last update began $(date)." > $starDir/index.html.tmp
+
+
+##### Make data and image table code for the wiki; sort images into Dirs
+for n in $nVec; do
+	for q in $qVec; do
+		for m in $mVec; do
+
+			imagefiles="plotit plotit2 ee1 ee2m$m ee3 ee4 ee5 ee6 ee8 eqContour"
+			nqmTitle=n${n}q${q}m${m}
+			title=$starDir/${nqmTitle}
+		
+				# if any models for n_q_m combination, continue
+			if [ -n "$(ls $starDir | grep $nqmTitle)" ]; then
+				echo "Writing $nqmTitle..."
+				
+					# add links to index page
+				echo "<a href=\"${nqmTitle}.html\"><h3>${nqmTitle}</h3></a>" >> $starDir/index.html.tmp
+			
+					# add main header to file
+				header="<html><body><h1>${nqmTitle}</h1>"
+				echo -e "$header" > ${title}.html.tmp
+				
+				
+					# Make data table code for web
+				for M in $MVec; do
+					rows="<h2>Star Mass ${M}</h2><table border=\"1\" cellspacing=\"0\" bgcolor=\"EDEDED\"><tr><td><h3>T/|W|</h3></td><td><h3>R-/R+</h3></td><td><h3>jin</h3></td><td><h3>jmax</h3></td><td><h3>Y1</h3></td><td><h3>Y2</h3></td><td><h3>Rphi/ro</h3></td><td><h3>Q-/ro</h3></td><td><h3>Q+/ro</h3></td><td><h3>Rgamma/ro</h3></td><td><h3>Rilr/ro</h3></td><td><h3>lindoutAvg</h3></td><td><h3>Rco/ro</h3></td><td><h3>R+/ro</h3></td><td><h3>R-/ro</h3></td><td><h3>Rlambda/ro</h3></td><td><h3>p</h3></td><td><h3>sqrtTau</h3></td><td><h3>Mtorque/Md</h3></td><td><h3>Jtorque/J1</h3></td><td><h3>radstarMinus</h3></td><td><h3>radstar</h3></td><td><h3>radstarPlus</h3></td></tr>"
+					csv="T/|W|,R-/R+,jin,jmax,Y1,Y2,Rphi/ro,Q-/ro,Q+/ro,Rgamma/ro,Rilr/ro,lindoutAvg,Rco/ro,R+/ro,R-/ro,Rlambda/ro,p,sqrtTau,Mtorque/Md,Jtorque,radstarMinus,radstar,radstarPlus\n"
+					isValid=$NULL
+					for j in $jVec; do
+						runName=n${n}q${q}m${m}M${M}j${j}
+						Dir=${starDir}/$runName
+						if [ -d $Dir ]; then
+							val="$scriptDir/./getValues $Dir"
+							isValid=true
+							rows="$rows <tr><td>$($val TW)</td><td>$($val rInOut)</td><td>${j}</td><td>$($val jmax)</td><td>$($val Y1)</td><td>$($val Y2)</td><td>$($val rPhiR0)</td><td>$($val qMinusR0)</td><td>$($val qPlusR0)</td><td>$($val rGammaR0)</td><td>$($val RilrR0)</td><td>$($val lindoutAvg)</td><td>$($val RcoR0)</td><td>$($val rPlusR0)</td><td>$($val rMinusR0)</td><td>$($val rLambdaR0)</td><td>$($val p)</td><td>$($val sqrtTau)</td><td>$($val mTorqueMd)</td><td>$($val jTorqueJ1)</td><td>$($val radstarMinus)</td><td>$($val radstar)</td><td>$($val radstarPlus)</td></tr>"
+							csv="$csv$($val TW),$($val rInOut),${j},$($val jmax),$($val Y1),$($val Y2),$($val rPhiR0),$($val qMinusR0),$($val qPlusR0),$($val rGammaR0),$($val RilrR0),$($val lindoutAvg),$($val RcoR0),$($val rPlusR0),$($val rMinusR0),$($val rLambdaR0),$($val p),$($val sqrtTau),$($val mTorqueMd),$($val jTorqueJ1),$($val radstarMinus),$($val radstar),$($val radstarPlus)\n"
+							jmax=$($val jmax)  #for use with row headers below
+						fi
+					done
+					if [ $isValid ]; then
+						rows="$rows </table> <a href=\"${nqmTitle}M${M}.csv\" target=\"_blank\"><h3>.csv table</h3></a> </br></br></br>"
+						echo -e $rows >> ${title}.html.tmp
+						echo -e $csv > $starDir/${nqmTitle}M${M}.csv
+					fi
+				done
+				
+				
+				##### Copy files and create image tables
+				echo "<h2>Image Tables:</h2><p style=\"font-size:24px\">" >> ${title}.html.tmp
+				
+				for i in $imagefiles; do
+			
+						# determine which columns should be in table
+					newMVec=$NULL
+					for M in $MVec; do
+						if [ -n "$(ls $starDir | sed s/j.*// | grep -w n${n}q${q}m${m}M${M})" ]; then
+							newMVec="$newMVec $M"
+						fi
+					done
+
+						# if any columns, continue
+					if [ "$newMVec" ]; then
+					
+							# get name of plot with greek symbols
+						[ "$i" == "plotit" ] && tableName="<p style=\"font-size:24px\"><i>|&delta;&rho;|/&rho; </i>(<i>t</i>)</p>"
+						[ "$i" == "plotit2" ] && tableName="<p style=\"font-size:24px\"><i>&delta;&rho; phase </i>(<i>t</i>)</p>"
+						[ "$i" == "ee1" ] && tableName="<p style=\"font-size:24px\"><i>|&delta;&rho;|/&rho; </i>(<i>&piv;</i>)</p>"
+						[ "$i" == "ee2m$m" ] && tableName="<p style=\"font-size:24px\"><i>&delta;&rho; phase </i>(<i>m</i>)</p>"
+						[ "$i" == "ee3" ] && tableName="<p style=\"font-size:24px\"><i>torque</i></p>"
+						[ "$i" == "ee4" ] && tableName="<p style=\"font-size:24px\"><i>work integrals</i></p>"
+						[ "$i" == "ee5" ] && tableName="<p style=\"font-size:24px\"><i>stresses</i></p>"
+						[ "$i" == "ee6" ] && tableName="<p style=\"font-size:24px\"><i>&delta;J</i></p>"
+						[ "$i" == "ee8" ] && tableName="<p style=\"font-size:24px\"><i>stresses / E</i></p>"
+						[ "$i" == "eqContour" ] && tableName="<p style=\"font-size:24px\"><i>eqContour</i></p>"
+
+							# create link to title page
+						echo "<a href=\"${nqmTitle}_${i}.html\" style=\"text-decoration:none\">${tableName}</a>" >> ${title}.html.tmp
+
+							# begin table page
+						echo -e "<html><body><h1>${nqmTitle}</h1>" > ${title}_${i}.html.tmp
+						echo "<table cellpadding=\"50\" border=\"1\" cellspacing=\"0\" bgcolor=\"Silver\"><caption><h2>${tableName}</h2></caption>" >> ${title}_${i}.html.tmp
+					
+							# add column headers
+						row="<tr><td></td>"
+						for N in $newMVec; do
+							row="$row <td  valign=\"bottom\"><center><h3>M${N}</h3></center></td>"
+						done
+						row="$row </tr>"
+						zeroCol="<tr><td></td><td valign=\"bottom\"><center><h3>M0.0</h3></center></td></tr>"
+					
+							# build image tables
+						zeroColExists=$NULL
+						zerosInTable=$NULL
+						emptyZeros=$NULL
+						for j in $jVec; do
+						
+								# check if any models in row, and if the only starmass is zero	
+							validRow=$NULL
+							MCheck=$NULL
+							for N in $newMVec; do
+								runName=n${n}q${q}m${m}M${N}j${j}
+								Dir=$starDir/$runName
+								if [ -d $Dir ]; then
+									validRow=true
+									MCheck="$MCheck $N" 
+								fi
+							done
+							MCheck=$(echo $MCheck | sed 's/ /\n/' | sort -gu)
+							
+								# if the only starmass is zero, put in separate table
+							if [ "$MCheck" = "0.0" ]; then
+								runName=n${n}q${q}m${m}M0.0j${j}
+								Dir=$starDir/$runName
+								if [ -d $Dir ]; then
+									iname=${runName}/${i}.png
+									zeroCol="$zeroCol <tr><td><center><h3>r-+$(echo "scale=2; ($j - 2)/($jmax - 2)" | bc)</h3></center></td><td bgcolor="White"><a href=\"${iname}\" target=\"_blank\"/><img src=\"${iname}\" width=\"100\"/></td>"
+									zeroColExists=true
+								fi
+								
+								# else if valid folders in row, add row to table
+							elif [ $validRow ]; then
+							
+									# add row header
+								row="$row <tr><td><center><h3>r-+$(echo "scale=2; ($j - 2)/($jmax - 2)" | bc)</h3></center></td>"
+				
+									# for each possible model in row
+								for N in $newMVec; do
+									runName=n${n}q${q}m${m}M${N}j${j}
+									Dir=$starDir/$runName
+									
+										# if folder exists and contains image, add to row and copy image to web
+									if [ -d $Dir ]; then
+										iname=${runName}/${i}.png
+										row="$row <td bgcolor=\"White\"><a href=\"${iname}\" target=\"_blank\"/><img src=\"${iname}\" width=\"125\"/></td>"
+										[ "$N" = "0.0" ] && zerosInTable=true
+									else
+										row="$row <td></td>"
+										[ "$N" = "0.0" ] && emptyZeros=true
+									fi
+									
+								done
+															
+									# end row
+								row="$row </tr>"
+							fi
+						done
+
+							# eliminate zero column from main table if empty
+						if [ $emptyZeros ] && [ ! $zerosInTable ]; then
+							row=$(echo $row | sed 's@<td valign=\"bottom\"><center><h3>M0.0</h3></center></td>@@;s@</h3></center></td> <td></td>@</h3></center>@g')
+						fi
+						
+							# write zeros-only table if necessary
+						if [ $zeroColExists ]; then
+							echo -e "<tr><td valign=\"top\"><table border=\"0\" cellpadding=\"0\" cellspacing=\"10\"> $zeroCol </td></table>" >> ${title}_${i}.html.tmp
+						fi
+						
+							# write main table
+						echo -e "<td valign=\"top\"><table border=\"0\" cellpadding=\"0\" cellspacing=\10\"> $row </td></tr></table>" >> ${title}_${i}.html.tmp
+					fi
+					
+						# end table page
+					echo "</table></br></br></br>" >> ${title}_${i}.html.tmp
+					echo "</body></html>" >> ${title}_${i}.html.tmp
+					mv ${title}_${i}.html.tmp ${title}_${i}.html
+				done
+			
+					# finish html code for page
+				echo "</br></br></br></body></html>" >> ${title}.html.tmp
+				mv ${title}.html.tmp ${title}.html
+			fi
+
+		done
+	done
+done
+
+#
+####################################################################################################
+#
+
+	# generate downloadable .mat variables
+echo "Exporting Matlab data..."
+matsDir="$starDir/mats"
+mkdir -p $matsDir
+excludeRunningModels=true
+for run in $(ls $starDir); do
+	runDir=$starDir/$run
+	val="$scriptDir/./getValues $runDir"
+	if [ -f $runDir/fort.50 ]; then
+		newestFile=$(ls -t $runDir | head -1)
+		if [ "$(unzip -l ${matsDir}.zip | grep $run)" ] && [ $(date -r $runDir/$newestFile +%s) -lt $(date -r ${matsDir}.zip +%s) ]; then
+			# skip if model is already in zip archive, and older than last export
+			echo "Skipping $run."
+		elif [ "$excludeRunningModels" = "true" ] && [ $($val isRunning) ]; then
+			echo "Omitting active model $run."
+		
+		else
+				cd $runDir	
+				j=${run##*j}
+				M=${run%%j*}; M=${M##*M}
+				m=${run%%M*}; m=${m##*m}
+				q=${run%%m*}; q=${q##*q}
+				n=${run%%q*}; n=${n##*n}
+				echo -n "Exporting $run to Matlab..."
+echo "
+n          = $n;
+q          = $q;
+m          = $m;
+starmass   = $M;
+jin        = $j;
+jmax       = $($val jmax);
+rInOut     = $($val rInOut);
+TW         = $($val TW);
+Y1         = $($val Y1);
+Y2         = $($val Y2);
+RcoR0      = $($val RcoR0);
+rPhiR0     = $($val rPhiR0); 
+qMinusR0   = $($val qMinusR0);
+qPlusR0    = $($val qPlusR0);
+rGammaR0   = $($val rGammaR0);
+RilrR0     = $($val RilrR0);
+rPlusR0    = $($val rPlusR0);
+rMinusR0   = $($val rMinusR0);
+rLambdaR0  = $($val rLambdaR0);
+mTorqueMd  = $($val mTorqueMd);
+jTorqueJ1  = $($val jTorqueJ1);
+jtotp      = $($val jtotp);
+rhomax     = $($val rhomax);
+MIRP       = $($val MIRP);
+eta        = $($val eta);
+p          = $($val p);
+sqrtTau    = $($val sqrtTau);
+tauzero    = $($val tauzero);
+omegazero  = $($val omegazero);
+jeansfreq  = $($val jeansfreq);
+cfreqzero  = $($val cfreqzero);
+keplerfreq = $($val keplerfreq);
+lindoutAvg = $($val lindoutAvg);
+radstarMinus = $($val radstarMinus);
+radstar      = $($val radstar);
+radstarPlus  = $($val radstarPlus);
+save ${matsDir}/${run}.mat;
+" | matlab -nodesktop -nosplash | tail -n +18
+				echo "done."
+		fi
+	fi
+done
+zip -jmqru $matsDir $matsDir
+
+	# finish index page
+echo "<a href=\"mats.zip\" target=\"_blank\"><h3>Download Matlab variables</h3></a>" >> $starDir/index.html.tmp
+echo "</html></body>" >> $starDir/index.html.tmp
+mv $starDir/index.html.tmp $starDir/index.html

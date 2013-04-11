@@ -1,0 +1,87 @@
+
+body { 
+	padding:0px 40px; 
+	background-color: rgb(252, 251, 252);
+	font-family:"Trebuchet MS", Helvetica, sans-serif;
+	color:#151515;
+}
+body.dataTable {
+	background-color:#F8F8F8;
+	color:#151515;
+}
+h1 {
+	margin:40px 0px; 
+	color: rgb(130, 130, 130);
+}
+table.data {
+	border-radius: 3px;
+	box-shadow: 1px 2px 1px dimgray;
+	border-collapse:collapse;
+	background-color: rgba(0, 0, 0, 0.15);
+	color:#151515;
+}
+table.data,
+table.data td,
+table.data tr,
+table.data th {
+	border: solid thin dimgray;
+}
+table.image {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	background-color: rgba(0, 0, 0, 0.3);
+	border: solid thin dimgray;
+	border-radius: 3px;
+	box-shadow: 1px 2px 1px dimgray;
+	color:#151515;
+}
+table.image tr{
+	vertical-align: top;
+}
+table.image table.image{
+
+	border-width:1px;
+	background-color: rgba(0, 0, 0, 0.07);
+	box-shadow: 0px 0px;
+}
+table.image table.image tr{
+	vertical-align: middle;
+}
+th, td, tr {
+	text-align:center;
+	padding:5px;
+}
+img.running {
+	width:235px;
+	opacity:.95;
+	border:solid thin #666;
+}
+img.zeros {
+	width:100px;
+	opacity:.95;
+	border:solid thin #666;
+}
+img.imageTable {
+	width:125px;
+	opacity:.95;
+	border:solid thin #666;
+}
+a	{
+	color:gray;
+}
+h2 p.formula {
+	font-family:Tahoma, sans-serif;
+	font-weight:normal;
+	margin-bottom: 0px;
+}
+a p.formula {
+	font-size:larger;
+	color:#151515;
+	text-indent: 15px;
+}
+table a { 
+	color:#151515;
+	text-decoration:none;
+}
+table a:hover { color: #444; }
+table a:visited { color:#444; }
